@@ -10,6 +10,7 @@ import {
   Wallet,
   ArrowLeftRight,
   Settings,
+  Bitcoin,
 } from "lucide-react";
 
 interface NavItemProps {
@@ -41,7 +42,7 @@ export function Navigation() {
     <div className="flex w-64 flex-col border-r bg-background">
       <div className="flex h-16 items-center border-b px-6">
         <h2 className="text-lg font-semibold tracking-tight">
-          Portfolio Manager
+          Gestor de Portfólio
         </h2>
       </div>
       <nav className="flex-1 overflow-auto py-4 px-4">
@@ -53,27 +54,32 @@ export function Navigation() {
           />
           <NavItem 
             to="/assets"
-            label="Assets"
+            label="Ativos"
             icon={<Wallet className="h-5 w-5" />}
           />
           <NavItem 
+            to="/crypto"
+            label="Criptomoedas"
+            icon={<Bitcoin className="h-5 w-5" />}
+          />
+          <NavItem 
             to="/transactions"
-            label="Transactions"
+            label="Transações"
             icon={<ArrowLeftRight className="h-5 w-5" />}
           />
           <NavItem 
             to="/import"
-            label="Import Data"
+            label="Importar Dados"
             icon={<FilePlus className="h-5 w-5" />}
           />
           <NavItem 
             to="/reports"
-            label="Reports"
+            label="Relatórios"
             icon={<BarChart3 className="h-5 w-5" />}
           />
           <NavItem 
             to="/settings"
-            label="Settings"
+            label="Configurações"
             icon={<Settings className="h-5 w-5" />}
           />
         </div>
