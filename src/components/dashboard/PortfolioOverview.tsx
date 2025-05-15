@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, PieArcDatum } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 const data = [
   { name: "Crypto", value: 30, color: "#38B2AC" },
@@ -18,23 +18,26 @@ export function PortfolioOverview() {
       </CardHeader>
       <CardContent className="flex flex-col items-center space-y-4">
         <div className="h-60 w-full">
-          <PieChart width={300} height={200}>
-            <pie
-              data={data}
-              cx={150}
-              cy={100}
-              innerRadius={60}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-              labelLine={false}
-            >
-              {data.map((entry, index) => (
-                <cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </pie>
-          </PieChart>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                labelLine={false}
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => [`${value}%`, 'Allocation']} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
         <div className="grid w-full grid-cols-2 gap-2">
           {data.map((item) => (
