@@ -12,7 +12,7 @@ import {
   TableFooter,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, MoveVertical, Plus, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -28,6 +28,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarTrigger,
+} from "@/components/ui/menubar";
 
 interface CriptoAsset {
   id: string;
@@ -43,6 +56,13 @@ interface CriptoAsset {
   sector: string;
   lend: number;
   borrow: number;
+}
+
+interface TableColumn {
+  id: string;
+  title: string;
+  visible: boolean;
+  order: number;
 }
 
 export default function CriptoPage() {
@@ -65,7 +85,34 @@ export default function CriptoPage() {
     "Infrastructure"
   ]);
   
+  const [custodians, setCustodians] = useState<string[]>([
+    "Gate",
+    "Meta/S1/Bravo",
+    "Phantom/S1/KAM",
+    "Vários",
+    "Binance",
+    "Coinbase"
+  ]);
+  
+  const [columns, setColumns] = useState<TableColumn[]>([
+    { id: "ticker", title: "Ticker", visible: true, order: 0 },
+    { id: "network", title: "Rede", visible: true, order: 1 },
+    { id: "sector", title: "Setor", visible: true, order: 2 },
+    { id: "price", title: "Preço (USD)", visible: true, order: 3 },
+    { id: "quantity", title: "Quantidade", visible: true, order: 4 },
+    { id: "total", title: "Total (USD)", visible: true, order: 5 },
+    { id: "totalBRL", title: "Total (BRL)", visible: true, order: 6 },
+    { id: "change", title: "Variação 24h", visible: true, order: 7 },
+    { id: "custodian", title: "Custódia", visible: true, order: 8 },
+    { id: "lend", title: "Lend", visible: true, order: 9 },
+    { id: "borrow", title: "Borrow", visible: true, order: 10 },
+    { id: "allocation", title: "% Carteira", visible: true, order: 11 },
+  ]);
+  
   const [newSector, setNewSector] = useState("");
+  const [newCustodian, setNewCustodian] = useState("");
+  const [draggedRowId, setDraggedRowId] = useState<string | null>(null);
+  const [draggedColId, setDraggedColId] = useState<string | null>(null);
 
   const totalPortfolio = assets.reduce((sum, asset) => sum + asset.total, 0);
   const totalPortfolioBRL = assets.reduce((sum, asset) => sum + asset.totalBRL, 0);
@@ -168,6 +215,16 @@ export default function CriptoPage() {
     }
   };
 
+  const addNewCustodian = () => {
+    if (newCustodian && !custodians.includes(newCustodian)) {
+      setCustodians([...custodians, newCustodian]);
+      setNewCustodian("");
+      toast.success("Nova custódia adicionada com sucesso!");
+    } else if (custodians.includes(newCustodian)) {
+      toast.error("Esta custódia já existe!");
+    }
+  };
+
   const addNewAsset = () => {
     const newId = (Math.max(...assets.map(asset => parseInt(asset.id))) + 1).toString();
     const newAsset: CriptoAsset = {
@@ -179,9 +236,9 @@ export default function CriptoPage() {
       total: 0,
       totalBRL: 0,
       change: 0,
-      custodian: "Nova Custódia",
+      custodian: custodians[0] || "Nova Custódia",
       allocation: 0,
-      sector: sectors[0],
+      sector: sectors[0] || "Novo Setor",
       lend: 0,
       borrow: 0
     };
@@ -192,6 +249,26 @@ export default function CriptoPage() {
   const deleteAsset = (id: string) => {
     setAssets(assets.filter(asset => asset.id !== id));
     toast.success("Criptomoeda removida com sucesso!");
+  };
+
+  const deleteSector = (sectorToDelete: string) => {
+    if (assets.some(asset => asset.sector === sectorToDelete)) {
+      toast.error("Este setor está em uso e não pode ser excluído!");
+      return;
+    }
+    
+    setSectors(sectors.filter(sector => sector !== sectorToDelete));
+    toast.success("Setor removido com sucesso!");
+  };
+
+  const deleteCustodian = (custodianToDelete: string) => {
+    if (assets.some(asset => asset.custodian === custodianToDelete)) {
+      toast.error("Esta custódia está em uso e não pode ser excluída!");
+      return;
+    }
+    
+    setCustodians(custodians.filter(custodian => custodian !== custodianToDelete));
+    toast.success("Custódia removida com sucesso!");
   };
 
   // Recalcula as alocações percentuais baseado no total do portfólio
@@ -205,6 +282,74 @@ export default function CriptoPage() {
     
     toast.success("Alocações recalculadas!");
   };
+
+  // Funções para arrastar linhas
+  const handleDragStart = (id: string) => {
+    setDraggedRowId(id);
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    if (draggedRowId && draggedRowId !== id) {
+      const draggedIndex = assets.findIndex(asset => asset.id === draggedRowId);
+      const targetIndex = assets.findIndex(asset => asset.id === id);
+      
+      if (draggedIndex !== -1 && targetIndex !== -1) {
+        const newAssets = [...assets];
+        const draggedItem = newAssets[draggedIndex];
+        
+        // Remove o item arrastado
+        newAssets.splice(draggedIndex, 1);
+        // Insere o item na posição de destino
+        newAssets.splice(targetIndex, 0, draggedItem);
+        
+        setAssets(newAssets);
+      }
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedRowId(null);
+    calculateAllocations();
+  };
+
+  // Funções para reordenar colunas
+  const handleColumnDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedColId(id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleColumnDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleColumnDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    
+    if (draggedColId && draggedColId !== targetId) {
+      setColumns(prevColumns => {
+        const newColumns = [...prevColumns];
+        const draggedIndex = newColumns.findIndex(col => col.id === draggedColId);
+        const targetIndex = newColumns.findIndex(col => col.id === targetId);
+        
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+          // Swap order values
+          const draggedOrder = newColumns[draggedIndex].order;
+          const targetOrder = newColumns[targetIndex].order;
+          
+          newColumns[draggedIndex] = {...newColumns[draggedIndex], order: targetOrder};
+          newColumns[targetIndex] = {...newColumns[targetIndex], order: draggedOrder};
+          
+          return newColumns.sort((a, b) => a.order - b.order);
+        }
+        return prevColumns;
+      });
+    }
+    
+    setDraggedColId(null);
+  };
+
+  const sortedColumns = [...columns].sort((a, b) => a.order - b.order);
 
   return (
     <div className="space-y-6">
@@ -231,165 +376,268 @@ export default function CriptoPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ticker</TableHead>
-                <TableHead>Rede</TableHead>
-                <TableHead>Setor</TableHead>
-                <TableHead>Preço (USD)</TableHead>
-                <TableHead>Quantidade</TableHead>
-                <TableHead className="text-right">Total (USD)</TableHead>
-                <TableHead className="text-right">Total (BRL)</TableHead>
-                <TableHead className="text-center">Variação 24h</TableHead>
-                <TableHead>Custódia</TableHead>
-                <TableHead className="text-right">Lend</TableHead>
-                <TableHead className="text-right">Borrow</TableHead>
-                <TableHead className="text-right">% Carteira</TableHead>
-                <TableHead className="text-center">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {assets.map((asset) => (
-                <TableRow key={asset.id}>
-                  <TableCell>
-                    <Input
-                      type="text"
-                      value={asset.ticker}
-                      onChange={(e) => handleChangeTicker(asset.id, e.target.value)}
-                      className="max-w-24 h-8"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="text"
-                      value={asset.network}
-                      onChange={(e) => handleChangeNetwork(asset.id, e.target.value)}
-                      className="max-w-24 h-8"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Select value={asset.sector} onValueChange={(value) => handleChangeSector(asset.id, value)}>
-                      <SelectTrigger className="w-28 h-8">
-                        <SelectValue placeholder="Selecionar setor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sectors.map((sector) => (
-                          <SelectItem key={sector} value={sector}>
-                            {sector}
-                          </SelectItem>
-                        ))}
-                        <div className="flex items-center gap-2 p-2 border-t">
-                          <Input 
-                            placeholder="Novo setor" 
-                            value={newSector} 
-                            onChange={(e) => setNewSector(e.target.value)}
-                            className="h-8"
-                          />
-                          <Button type="button" size="sm" onClick={addNewSector}>
-                            <Plus className="h-3 w-3" />
-                          </Button>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {sortedColumns.map((column) => (
+                    column.visible && (
+                      <TableHead 
+                        key={column.id}
+                        draggable
+                        onDragStart={(e) => handleColumnDragStart(e, column.id)}
+                        onDragOver={handleColumnDragOver}
+                        onDrop={(e) => handleColumnDrop(e, column.id)}
+                        className="cursor-move relative"
+                      >
+                        <div className="flex items-center">
+                          <MoveVertical className="h-3 w-3 mr-1 text-muted-foreground" />
+                          {column.title}
                         </div>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    ${asset.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      value={asset.quantity}
-                      onChange={(e) => handleChangeQuantity(asset.id, parseFloat(e.target.value) || 0)}
-                      className="max-w-24 h-8"
-                      step="0.00000001"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Input
-                      type="number"
-                      value={asset.total}
-                      onChange={(e) => handleChangeTotal(asset.id, parseFloat(e.target.value) || 0)}
-                      className="max-w-28 h-8 text-right"
-                      step="0.01"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    R$ {asset.totalBRL.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className={`flex items-center justify-center ${asset.change >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      {asset.change >= 0 ? (
-                        <ArrowUp className="mr-1 h-3 w-3" />
-                      ) : (
-                        <ArrowDown className="mr-1 h-3 w-3" />
-                      )}
-                      {Math.abs(asset.change)}%
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="text"
-                      value={asset.custodian}
-                      onChange={(e) => handleChangeCustodian(asset.id, e.target.value)}
-                      className="max-w-28 h-8"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Input
-                      type="number"
-                      value={asset.lend}
-                      onChange={(e) => handleChangeLend(asset.id, parseFloat(e.target.value) || 0)}
-                      className="max-w-20 h-8 text-right"
-                      step="0.01"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Input
-                      type="number"
-                      value={asset.borrow}
-                      onChange={(e) => handleChangeBorrow(asset.id, parseFloat(e.target.value) || 0)}
-                      className="max-w-20 h-8 text-right"
-                      step="0.01"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">{asset.allocation}%</TableCell>
-                  <TableCell className="text-center">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => deleteAsset(asset.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive/80"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                      </TableHead>
+                    )
+                  ))}
+                  <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={4} className="font-medium">TOTAL</TableCell>
-                <TableCell></TableCell>
-                <TableCell className="text-right font-medium">
-                  ${totalPortfolio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  R$ {totalPortfolioBRL.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </TableCell>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
-                <TableCell className="text-right font-medium">
-                  {totalLend.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  {totalBorrow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </TableCell>
-                <TableCell className="text-right font-medium">100%</TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {assets.map((asset) => (
+                  <TableRow 
+                    key={asset.id}
+                    draggable
+                    onDragStart={() => handleDragStart(asset.id)}
+                    onDragOver={(e) => handleDragOver(e, asset.id)}
+                    onDragEnd={handleDragEnd}
+                    className="cursor-move"
+                  >
+                    {sortedColumns.map((column) => {
+                      if (!column.visible) return null;
+                      
+                      switch(column.id) {
+                        case 'ticker':
+                          return (
+                            <TableCell key={column.id}>
+                              <Input
+                                type="text"
+                                value={asset.ticker}
+                                onChange={(e) => handleChangeTicker(asset.id, e.target.value)}
+                                className="max-w-24 h-8"
+                              />
+                            </TableCell>
+                          );
+                        case 'network':
+                          return (
+                            <TableCell key={column.id}>
+                              <Input
+                                type="text"
+                                value={asset.network}
+                                onChange={(e) => handleChangeNetwork(asset.id, e.target.value)}
+                                className="max-w-24 h-8"
+                              />
+                            </TableCell>
+                          );
+                        case 'sector':
+                          return (
+                            <TableCell key={column.id}>
+                              <ContextMenu>
+                                <ContextMenuTrigger>
+                                  <Select value={asset.sector} onValueChange={(value) => handleChangeSector(asset.id, value)}>
+                                    <SelectTrigger className="w-28 h-8">
+                                      <SelectValue placeholder="Selecionar setor" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {sectors.map((sector) => (
+                                        <SelectItem key={sector} value={sector}>
+                                          <div className="flex justify-between items-center w-full">
+                                            <span>{sector}</span>
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                      <div className="flex items-center gap-2 p-2 border-t">
+                                        <Input 
+                                          placeholder="Novo setor" 
+                                          value={newSector} 
+                                          onChange={(e) => setNewSector(e.target.value)}
+                                          className="h-8"
+                                        />
+                                        <Button type="button" size="sm" onClick={addNewSector}>
+                                          <Plus className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </SelectContent>
+                                  </Select>
+                                </ContextMenuTrigger>
+                                <ContextMenuContent>
+                                  {sectors.map((sector) => (
+                                    <ContextMenuItem 
+                                      key={sector}
+                                      className="flex justify-between items-center"
+                                      onClick={() => deleteSector(sector)}
+                                    >
+                                      <span>Excluir "{sector}"</span>
+                                      <Trash className="h-4 w-4 ml-2 text-destructive" />
+                                    </ContextMenuItem>
+                                  ))}
+                                </ContextMenuContent>
+                              </ContextMenu>
+                            </TableCell>
+                          );
+                        case 'price':
+                          return (
+                            <TableCell key={column.id}>
+                              ${asset.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </TableCell>
+                          );
+                        case 'quantity':
+                          return (
+                            <TableCell key={column.id}>
+                              <Input
+                                type="number"
+                                value={asset.quantity}
+                                onChange={(e) => handleChangeQuantity(asset.id, parseFloat(e.target.value) || 0)}
+                                className="max-w-24 h-8"
+                                step="0.00000001"
+                              />
+                            </TableCell>
+                          );
+                        case 'total':
+                          return (
+                            <TableCell key={column.id} className="text-right">
+                              <Input
+                                type="number"
+                                value={asset.total}
+                                onChange={(e) => handleChangeTotal(asset.id, parseFloat(e.target.value) || 0)}
+                                className="max-w-28 h-8 text-right"
+                                step="0.01"
+                              />
+                            </TableCell>
+                          );
+                        case 'totalBRL':
+                          return (
+                            <TableCell key={column.id} className="text-right">
+                              R$ {asset.totalBRL.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </TableCell>
+                          );
+                        case 'change':
+                          return (
+                            <TableCell key={column.id} className="text-center">
+                              <span className={`flex items-center justify-center ${asset.change >= 0 ? "text-green-500" : "text-red-500"}`}>
+                                {asset.change >= 0 ? (
+                                  <ArrowUp className="mr-1 h-3 w-3" />
+                                ) : (
+                                  <ArrowDown className="mr-1 h-3 w-3" />
+                                )}
+                                {Math.abs(asset.change)}%
+                              </span>
+                            </TableCell>
+                          );
+                        case 'custodian':
+                          return (
+                            <TableCell key={column.id}>
+                              <ContextMenu>
+                                <ContextMenuTrigger>
+                                  <Input
+                                    type="text"
+                                    value={asset.custodian}
+                                    onChange={(e) => handleChangeCustodian(asset.id, e.target.value)}
+                                    className="max-w-28 h-8"
+                                  />
+                                </ContextMenuTrigger>
+                                <ContextMenuContent>
+                                  {custodians.map((custodian) => (
+                                    <ContextMenuItem 
+                                      key={custodian}
+                                      className="flex justify-between items-center"
+                                      onClick={() => deleteCustodian(custodian)}
+                                    >
+                                      <span>Excluir "{custodian}"</span>
+                                      <Trash className="h-4 w-4 ml-2 text-destructive" />
+                                    </ContextMenuItem>
+                                  ))}
+                                  <div className="flex items-center gap-2 p-2 border-t">
+                                    <Input 
+                                      placeholder="Nova custódia" 
+                                      value={newCustodian} 
+                                      onChange={(e) => setNewCustodian(e.target.value)}
+                                      className="h-8"
+                                    />
+                                    <Button type="button" size="sm" onClick={addNewCustodian}>
+                                      <Plus className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </ContextMenuContent>
+                              </ContextMenu>
+                            </TableCell>
+                          );
+                        case 'lend':
+                          return (
+                            <TableCell key={column.id} className="text-right">
+                              <Input
+                                type="number"
+                                value={asset.lend}
+                                onChange={(e) => handleChangeLend(asset.id, parseFloat(e.target.value) || 0)}
+                                className="max-w-20 h-8 text-right"
+                                step="0.01"
+                              />
+                            </TableCell>
+                          );
+                        case 'borrow':
+                          return (
+                            <TableCell key={column.id} className="text-right">
+                              <Input
+                                type="number"
+                                value={asset.borrow}
+                                onChange={(e) => handleChangeBorrow(asset.id, parseFloat(e.target.value) || 0)}
+                                className="max-w-20 h-8 text-right"
+                                step="0.01"
+                              />
+                            </TableCell>
+                          );
+                        case 'allocation':
+                          return (
+                            <TableCell key={column.id} className="text-right">{asset.allocation}%</TableCell>
+                          );
+                        default:
+                          return <TableCell key={column.id}></TableCell>;
+                      }
+                    })}
+                    <TableCell className="text-center">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => deleteAsset(asset.id)}
+                        className="h-8 w-8 text-destructive hover:text-destructive/80"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={4} className="font-medium">TOTAL</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell className="text-right font-medium">
+                    ${totalPortfolio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    R$ {totalPortfolioBRL.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell className="text-right font-medium">
+                    {totalLend.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {totalBorrow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">100%</TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
