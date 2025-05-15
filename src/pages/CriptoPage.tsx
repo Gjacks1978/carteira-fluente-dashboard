@@ -9,15 +9,28 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp, Plus, Trash } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CriptoAsset {
   id: string;
-  name: string;
   ticker: string;
   network: string;
   price: number;
@@ -27,19 +40,37 @@ interface CriptoAsset {
   change: number;
   custodian: string;
   allocation: number;
+  sector: string;
+  lend: number;
+  borrow: number;
 }
 
 export default function CriptoPage() {
   const [assets, setAssets] = useState<CriptoAsset[]>([
-    { id: "1", name: "Bitcoin", ticker: "BTC", network: "BTC", price: 103027.99, quantity: 0.6, total: 61810.14, totalBRL: 347247.08, change: 1.77, custodian: "Gate", allocation: 65.89 },
-    { id: "2", name: "Ethereum", ticker: "ETH", network: "ETH", price: 2527.67, quantity: 6.18, total: 15610.36, totalBRL: 87698.63, change: 0.72, custodian: "Meta/S1/Bravo", allocation: 16.64 },
-    { id: "3", name: "Solana", ticker: "SOL", network: "SOL", price: 169.26, quantity: 22.33, total: 3779.48, totalBRL: 21233.05, change: 1.84, custodian: "Phantom/S1/KAM", allocation: 4.03 },
-    { id: "4", name: "Altcoins", ticker: "ALC", network: "VÁRIOS", price: 0, quantity: 0, total: 4929.19, totalBRL: 27692.42, change: 0.07, custodian: "Vários", allocation: 5.25 },
-    { id: "5", name: "Pools", ticker: "POOL", network: "VÁRIOS", price: 0, quantity: 0, total: 11523.24, totalBRL: 64737.30, change: 0.03, custodian: "Vários", allocation: 12.28 },
+    { id: "1", ticker: "BTC", network: "BTC", price: 103027.99, quantity: 0.6, total: 61810.14, totalBRL: 347247.08, change: 1.77, custodian: "Gate", allocation: 65.89, sector: "Store of Value", lend: 0.2, borrow: 0 },
+    { id: "2", ticker: "ETH", network: "ETH", price: 2527.67, quantity: 6.18, total: 15610.36, totalBRL: 87698.63, change: 0.72, custodian: "Meta/S1/Bravo", allocation: 16.64, sector: "Smart Contract", lend: 1.5, borrow: 0 },
+    { id: "3", ticker: "SOL", network: "SOL", price: 169.26, quantity: 22.33, total: 3779.48, totalBRL: 21233.05, change: 1.84, custodian: "Phantom/S1/KAM", allocation: 4.03, sector: "Smart Contract", lend: 0, borrow: 0 },
+    { id: "4", ticker: "ALC", network: "VÁRIOS", price: 0, quantity: 0, total: 4929.19, totalBRL: 27692.42, change: 0.07, custodian: "Vários", allocation: 5.25, sector: "Altcoins", lend: 0, borrow: 0 },
+    { id: "5", ticker: "POOL", network: "VÁRIOS", price: 0, quantity: 0, total: 11523.24, totalBRL: 64737.30, change: 0.03, custodian: "Vários", allocation: 12.28, sector: "DeFi", lend: 5.2, borrow: 2.1 },
   ]);
+
+  const [sectors, setSectors] = useState<string[]>([
+    "Store of Value",
+    "Smart Contract",
+    "DeFi",
+    "Gaming",
+    "Metaverse",
+    "Altcoins",
+    "Layer 2",
+    "Infrastructure"
+  ]);
+  
+  const [newSector, setNewSector] = useState("");
 
   const totalPortfolio = assets.reduce((sum, asset) => sum + asset.total, 0);
   const totalPortfolioBRL = assets.reduce((sum, asset) => sum + asset.totalBRL, 0);
+  const totalLend = assets.reduce((sum, asset) => sum + asset.lend, 0);
+  const totalBorrow = assets.reduce((sum, asset) => sum + asset.borrow, 0);
 
   const handleChangeQuantity = (id: string, newQuantity: number) => {
     setAssets(assets.map(asset => {
@@ -100,11 +131,47 @@ export default function CriptoPage() {
     }));
   };
 
+  const handleChangeSector = (id: string, newSector: string) => {
+    setAssets(assets.map(asset => {
+      if (asset.id === id) {
+        return { ...asset, sector: newSector };
+      }
+      return asset;
+    }));
+  };
+
+  const handleChangeLend = (id: string, newLend: number) => {
+    setAssets(assets.map(asset => {
+      if (asset.id === id) {
+        return { ...asset, lend: newLend };
+      }
+      return asset;
+    }));
+  };
+
+  const handleChangeBorrow = (id: string, newBorrow: number) => {
+    setAssets(assets.map(asset => {
+      if (asset.id === id) {
+        return { ...asset, borrow: newBorrow };
+      }
+      return asset;
+    }));
+  };
+
+  const addNewSector = () => {
+    if (newSector && !sectors.includes(newSector)) {
+      setSectors([...sectors, newSector]);
+      setNewSector("");
+      toast.success("Novo setor adicionado com sucesso!");
+    } else if (sectors.includes(newSector)) {
+      toast.error("Este setor já existe!");
+    }
+  };
+
   const addNewAsset = () => {
     const newId = (Math.max(...assets.map(asset => parseInt(asset.id))) + 1).toString();
     const newAsset: CriptoAsset = {
       id: newId,
-      name: "Nova Criptomoeda",
       ticker: "NOVO",
       network: "REDE",
       price: 0,
@@ -113,7 +180,10 @@ export default function CriptoPage() {
       totalBRL: 0,
       change: 0,
       custodian: "Nova Custódia",
-      allocation: 0
+      allocation: 0,
+      sector: sectors[0],
+      lend: 0,
+      borrow: 0
     };
     setAssets([...assets, newAsset]);
     toast.success("Nova criptomoeda adicionada com sucesso!");
@@ -164,23 +234,24 @@ export default function CriptoPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
                 <TableHead>Ticker</TableHead>
                 <TableHead>Rede</TableHead>
+                <TableHead>Setor</TableHead>
                 <TableHead>Preço (USD)</TableHead>
                 <TableHead>Quantidade</TableHead>
                 <TableHead className="text-right">Total (USD)</TableHead>
                 <TableHead className="text-right">Total (BRL)</TableHead>
                 <TableHead className="text-center">Variação 24h</TableHead>
                 <TableHead>Custódia</TableHead>
-                <TableHead className="text-right">Alocação</TableHead>
+                <TableHead className="text-right">Lend</TableHead>
+                <TableHead className="text-right">Borrow</TableHead>
+                <TableHead className="text-right">% Carteira</TableHead>
                 <TableHead className="text-center">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {assets.map((asset) => (
                 <TableRow key={asset.id}>
-                  <TableCell className="font-medium">{asset.name}</TableCell>
                   <TableCell>
                     <Input
                       type="text"
@@ -196,6 +267,31 @@ export default function CriptoPage() {
                       onChange={(e) => handleChangeNetwork(asset.id, e.target.value)}
                       className="max-w-24 h-8"
                     />
+                  </TableCell>
+                  <TableCell>
+                    <Select value={asset.sector} onValueChange={(value) => handleChangeSector(asset.id, value)}>
+                      <SelectTrigger className="w-28 h-8">
+                        <SelectValue placeholder="Selecionar setor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sectors.map((sector) => (
+                          <SelectItem key={sector} value={sector}>
+                            {sector}
+                          </SelectItem>
+                        ))}
+                        <div className="flex items-center gap-2 p-2 border-t">
+                          <Input 
+                            placeholder="Novo setor" 
+                            value={newSector} 
+                            onChange={(e) => setNewSector(e.target.value)}
+                            className="h-8"
+                          />
+                          <Button type="button" size="sm" onClick={addNewSector}>
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     ${asset.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -222,7 +318,7 @@ export default function CriptoPage() {
                     R$ {asset.totalBRL.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className={`flex items-center justify-center ${asset.change >= 0 ? "text-finance-green" : "text-finance-red"}`}>
+                    <span className={`flex items-center justify-center ${asset.change >= 0 ? "text-green-500" : "text-red-500"}`}>
                       {asset.change >= 0 ? (
                         <ArrowUp className="mr-1 h-3 w-3" />
                       ) : (
@@ -239,6 +335,24 @@ export default function CriptoPage() {
                       className="max-w-28 h-8"
                     />
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Input
+                      type="number"
+                      value={asset.lend}
+                      onChange={(e) => handleChangeLend(asset.id, parseFloat(e.target.value) || 0)}
+                      className="max-w-20 h-8 text-right"
+                      step="0.01"
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Input
+                      type="number"
+                      value={asset.borrow}
+                      onChange={(e) => handleChangeBorrow(asset.id, parseFloat(e.target.value) || 0)}
+                      className="max-w-20 h-8 text-right"
+                      step="0.01"
+                    />
+                  </TableCell>
                   <TableCell className="text-right">{asset.allocation}%</TableCell>
                   <TableCell className="text-center">
                     <Button 
@@ -253,6 +367,28 @@ export default function CriptoPage() {
                 </TableRow>
               ))}
             </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={4} className="font-medium">TOTAL</TableCell>
+                <TableCell></TableCell>
+                <TableCell className="text-right font-medium">
+                  ${totalPortfolio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  R$ {totalPortfolioBRL.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+                <TableCell className="text-right font-medium">
+                  {totalLend.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  {totalBorrow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell className="text-right font-medium">100%</TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            </TableFooter>
           </Table>
         </CardContent>
       </Card>
