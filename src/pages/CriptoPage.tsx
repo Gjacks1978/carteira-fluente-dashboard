@@ -559,7 +559,7 @@ export default function CriptoPage() {
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={4} className="font-medium bg-emerald-50">TOTAL</TableCell>
+                  <TableCell colSpan={4} className="font-medium bg-emerald-50 bg-[finance-gray-light]">TOTAL</TableCell>
                   <TableCell></TableCell>
                   <TableCell className="text-right font-medium">
                     ${totalPortfolio.toLocaleString('pt-BR', {
