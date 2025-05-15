@@ -11,7 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface CriptoAsset {
   id: string;
@@ -71,10 +73,76 @@ export default function CriptoPage() {
     }));
   };
 
+  const handleChangeTicker = (id: string, newTicker: string) => {
+    setAssets(assets.map(asset => {
+      if (asset.id === id) {
+        return { ...asset, ticker: newTicker };
+      }
+      return asset;
+    }));
+  };
+
+  const handleChangeNetwork = (id: string, newNetwork: string) => {
+    setAssets(assets.map(asset => {
+      if (asset.id === id) {
+        return { ...asset, network: newNetwork };
+      }
+      return asset;
+    }));
+  };
+
+  const handleChangeCustodian = (id: string, newCustodian: string) => {
+    setAssets(assets.map(asset => {
+      if (asset.id === id) {
+        return { ...asset, custodian: newCustodian };
+      }
+      return asset;
+    }));
+  };
+
+  const addNewAsset = () => {
+    const newId = (Math.max(...assets.map(asset => parseInt(asset.id))) + 1).toString();
+    const newAsset: CriptoAsset = {
+      id: newId,
+      name: "Nova Criptomoeda",
+      ticker: "NOVO",
+      network: "REDE",
+      price: 0,
+      quantity: 0,
+      total: 0,
+      totalBRL: 0,
+      change: 0,
+      custodian: "Nova Custódia",
+      allocation: 0
+    };
+    setAssets([...assets, newAsset]);
+    toast.success("Nova criptomoeda adicionada com sucesso!");
+  };
+
+  const deleteAsset = (id: string) => {
+    setAssets(assets.filter(asset => asset.id !== id));
+    toast.success("Criptomoeda removida com sucesso!");
+  };
+
+  // Recalcula as alocações percentuais baseado no total do portfólio
+  const calculateAllocations = () => {
+    if (totalPortfolio === 0) return;
+    
+    setAssets(assets.map(asset => ({
+      ...asset,
+      allocation: parseFloat(((asset.total / totalPortfolio) * 100).toFixed(2))
+    })));
+    
+    toast.success("Alocações recalculadas!");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Carteira de Criptomoedas</h1>
+        <Button onClick={addNewAsset} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" /> Adicionar Criptomoeda
+        </Button>
       </div>
 
       <Card>
@@ -85,6 +153,11 @@ export default function CriptoPage() {
             <span className="ml-4">
               Valor total em BRL: R$ {totalPortfolioBRL.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
+            <div className="mt-2">
+              <Button variant="outline" size="sm" onClick={calculateAllocations}>
+                Recalcular Alocações
+              </Button>
+            </div>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -101,14 +174,29 @@ export default function CriptoPage() {
                 <TableHead className="text-center">Variação 24h</TableHead>
                 <TableHead>Custódia</TableHead>
                 <TableHead className="text-right">Alocação</TableHead>
+                <TableHead className="text-center">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {assets.map((asset) => (
                 <TableRow key={asset.id}>
                   <TableCell className="font-medium">{asset.name}</TableCell>
-                  <TableCell>{asset.ticker}</TableCell>
-                  <TableCell>{asset.network}</TableCell>
+                  <TableCell>
+                    <Input
+                      type="text"
+                      value={asset.ticker}
+                      onChange={(e) => handleChangeTicker(asset.id, e.target.value)}
+                      className="max-w-24 h-8"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="text"
+                      value={asset.network}
+                      onChange={(e) => handleChangeNetwork(asset.id, e.target.value)}
+                      className="max-w-24 h-8"
+                    />
+                  </TableCell>
                   <TableCell>
                     ${asset.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </TableCell>
@@ -143,8 +231,25 @@ export default function CriptoPage() {
                       {Math.abs(asset.change)}%
                     </span>
                   </TableCell>
-                  <TableCell>{asset.custodian}</TableCell>
+                  <TableCell>
+                    <Input
+                      type="text"
+                      value={asset.custodian}
+                      onChange={(e) => handleChangeCustodian(asset.id, e.target.value)}
+                      className="max-w-28 h-8"
+                    />
+                  </TableCell>
                   <TableCell className="text-right">{asset.allocation}%</TableCell>
+                  <TableCell className="text-center">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => deleteAsset(asset.id)}
+                      className="h-8 w-8 text-destructive hover:text-destructive/80"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
