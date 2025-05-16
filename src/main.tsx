@@ -1,5 +1,15 @@
-import { createRoot } from 'react-dom/client'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Configurar variáveis de ambiente do Replit
+if (import.meta.env.REPLIT_COINMARKETCAP_API_KEY) {
+  process.env.COINMARKETCAP_API_KEY = import.meta.env.REPLIT_COINMARKETCAP_API_KEY;
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)

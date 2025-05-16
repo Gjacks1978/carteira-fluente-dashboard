@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { CriptoAsset, TableColumn } from "@/components/crypto/types";
 import { CryptoSummaryCards } from "@/components/crypto/CryptoSummaryCards";
 import AssetTable from "@/components/crypto/AssetTable";
 import PortfolioSummaryCard from "@/components/crypto/PortfolioSummaryCard";
+import { updateCryptoPrices } from "@/services/coinmarketcap";
 
 export default function CriptoPage() {
   const [assets, setAssets] = useState<CriptoAsset[]>([
@@ -455,14 +456,40 @@ export default function CriptoPage() {
 
   const sortedColumns = [...columns].sort((a, b) => a.order - b.order);
 
+  // Função para atualizar preços de criptomoedas
+  const refreshCryptoPrices = async () => {
+    await updateCryptoPrices(assets, setAssets);
+    calculateAllocations();
+  };
+
+  // Atualizar preços quando a página carrega
+  useEffect(() => {
+    refreshCryptoPrices();
+    // Configurar atualização automática a cada 5 minutos
+    const interval = setInterval(() => {
+      refreshCryptoPrices();
+    }, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="space-y-6">
       
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Carteira de Criptomoedas</h1>
-        <Button onClick={addNewAsset} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" /> Adicionar Criptomoeda
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={refreshCryptoPrices} 
+            variant="outline" 
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" /> Atualizar Preços
+          </Button>
+          <Button onClick={addNewAsset} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" /> Adicionar Criptomoeda
+          </Button>
+        </div>
       </div>
 
       <CryptoSummaryCards assets={assets} />
