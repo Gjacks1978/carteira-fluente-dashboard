@@ -178,4 +178,3 @@ const AssetTable: React.FC<AssetTableProps> = ({
 };
 
 export default AssetTable;
-```
