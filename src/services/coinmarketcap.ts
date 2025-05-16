@@ -166,5 +166,5 @@ export const shouldAutoUpdate = (): boolean => {
   const twelveHoursInMs = 12 * 60 * 60 * 1000; // 12 horas em milissegundos
   
   // Retorna true se passaram 12 horas desde a última atualização
-  return (now - lastUpdateTime) >= twelveHoursInMs;
+  return (now - getLastUpdateTime()) > twelveHoursInMs;rn (now - lastUpdateTime) >= twelveHoursInMs;
 };
