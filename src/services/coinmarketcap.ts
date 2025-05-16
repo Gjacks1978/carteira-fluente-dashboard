@@ -58,13 +58,12 @@ export const fetchCryptoPrices = async (symbols: string[]): Promise<Record<strin
     // Uso direto da API key que já definimos no início do arquivo
     console.log("Iniciando busca por preços para:", symbols.join(", "));
     
-    // Cria URL com os símbolos das criptomoedas
-    const url = `${BASE_URL}/cryptocurrency/quotes/latest?symbol=${symbols.join(",")}`;
+    // Cria URL com os símbolos das criptomoedas usando o proxy configurado no vite.config.ts
+    const url = `/api/coinmarketcap/cryptocurrency/quotes/latest?symbol=${symbols.join(",")}`;
     
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'X-CMC_PRO_API_KEY': API_KEY,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },

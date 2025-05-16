@@ -484,11 +484,13 @@ export default function CriptoPage() {
     
     // Verificar a cada hora se precisa atualizar (12 horas desde a última atualização)
     const interval = setInterval(() => {
-      const { shouldAutoUpdate } = require("@/services/coinmarketcap");
-      if (shouldAutoUpdate()) {
-        refreshCryptoPrices();
-        toast.info("Atualização automática de preços realizada (12h)");
-      }
+      // Importar diretamente a função shouldAutoUpdate
+      import("@/services/coinmarketcap").then(({ shouldAutoUpdate }) => {
+        if (shouldAutoUpdate()) {
+          refreshCryptoPrices();
+          toast.info("Atualização automática de preços realizada (12h)");
+        }
+      });
     }, 60 * 60 * 1000); // Verifica a cada hora se é necessário atualizar
     
     return () => clearInterval(interval);
