@@ -22,6 +22,7 @@ args = "npm run dev"
 [[ports]]
 localPort = 8080
 externalPort = 80
+exposeLocalhost = true
 
 [[ports]]
 localPort = 8081
