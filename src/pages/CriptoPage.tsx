@@ -462,13 +462,19 @@ export default function CriptoPage() {
     calculateAllocations();
   };
 
-  // Atualizar preços quando a página carrega
+  // Atualizar preços quando a página carrega e verificar a cada hora se é necessário atualizar (a cada 12h)
   useEffect(() => {
+    // Atualizar preços ao carregar a página
     refreshCryptoPrices();
-    // Configurar atualização automática a cada 5 minutos
+    
+    // Verificar a cada hora se precisa atualizar (12 horas desde a última atualização)
     const interval = setInterval(() => {
-      refreshCryptoPrices();
-    }, 5 * 60 * 1000);
+      const { shouldAutoUpdate } = require("@/services/coinmarketcap");
+      if (shouldAutoUpdate()) {
+        refreshCryptoPrices();
+        toast.info("Atualização automática de preços realizada (12h)");
+      }
+    }, 60 * 60 * 1000); // Verifica a cada hora se é necessário atualizar
     
     return () => clearInterval(interval);
   }, []);
@@ -484,7 +490,7 @@ export default function CriptoPage() {
             variant="outline" 
             className="flex items-center gap-2"
           >
-            <RefreshCw className="h-4 w-4" /> Atualizar Preços
+            <RefreshCw className="h-4 w-4" /> Atualizar Preços Manualmente
           </Button>
           <Button onClick={addNewAsset} className="flex items-center gap-2">
             <Plus className="h-4 w-4" /> Adicionar Criptomoeda

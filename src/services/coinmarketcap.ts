@@ -1,7 +1,7 @@
 
 import { toast } from "sonner";
 
-const API_KEY = process.env.COINMARKETCAP_API_KEY;
+const API_KEY = "e341ff27-5e33-4c6d-a3f1-08646d086fec"; // Chave API fornecida
 const BASE_URL = "https://pro-api.coinmarketcap.com/v1";
 
 export interface CoinMarketCapQuote {
@@ -50,7 +50,7 @@ export interface CoinMarketCapResponse {
 export const fetchCryptoPrices = async (symbols: string[]): Promise<Record<string, CoinMarketCapData> | null> => {
   try {
     if (!API_KEY) {
-      toast.error("Chave da API do CoinMarketCap não encontrada. Adicione-a nas configurações de segredos.");
+      toast.error("Chave da API do CoinMarketCap não encontrada.");
       return null;
     }
 
@@ -76,6 +76,9 @@ export const fetchCryptoPrices = async (symbols: string[]): Promise<Record<strin
   }
 };
 
+// Armazena a última vez que os preços foram atualizados
+let lastUpdateTime: number = 0;
+
 export const updateCryptoPrices = async (
   assets: any[],
   setAssets: React.Dispatch<React.SetStateAction<any[]>>
@@ -83,6 +86,9 @@ export const updateCryptoPrices = async (
   const symbols = assets.map((asset) => asset.ticker).filter((ticker) => ticker !== "NOVO");
   
   if (symbols.length === 0) return;
+  
+  // Atualiza o timestamp da última atualização
+  lastUpdateTime = Date.now();
   
   const data = await fetchCryptoPrices(symbols);
   
@@ -112,4 +118,13 @@ export const updateCryptoPrices = async (
   });
   
   toast.success("Preços das criptomoedas atualizados com sucesso!");
+};
+
+// Verifica se é necessária uma atualização automática
+export const shouldAutoUpdate = (): boolean => {
+  const now = Date.now();
+  const twelveHoursInMs = 12 * 60 * 60 * 1000; // 12 horas em milissegundos
+  
+  // Retorna true se passaram 12 horas desde a última atualização
+  return (now - lastUpdateTime) >= twelveHoursInMs;
 };
