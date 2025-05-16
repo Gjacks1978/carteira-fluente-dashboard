@@ -1,8 +1,10 @@
 
 import { toast } from "sonner";
 
-const API_KEY = "e341ff27-5e33-4c6d-a3f1-08646d086fec"; // Chave API fornecida
+// Usar a sintaxe correta do Vite para variáveis de ambiente
+const API_KEY = "e341ff27-5e33-4c6d-a3f1-08646d086fec";
 const BASE_URL = "https://pro-api.coinmarketcap.com/v1";
+const PROXY_URL = "/api/coinmarketcap"; // Opcional: para contornar CORS se necessário
 
 export interface CoinMarketCapQuote {
   price: number;
@@ -47,77 +49,116 @@ export interface CoinMarketCapResponse {
   data: Record<string, CoinMarketCapData>;
 }
 
+// Armazena a última vez que os preços foram atualizados
+let lastUpdateTime: number = 0;
+
+// Função para buscar preços de criptomoedas
 export const fetchCryptoPrices = async (symbols: string[]): Promise<Record<string, CoinMarketCapData> | null> => {
   try {
-    if (!API_KEY) {
-      toast.error("Chave da API do CoinMarketCap não encontrada.");
-      return null;
-    }
-
-    const response = await fetch(`${BASE_URL}/cryptocurrency/quotes/latest?symbol=${symbols.join(",")}`, {
+    // Uso direto da API key que já definimos no início do arquivo
+    console.log("Iniciando busca por preços para:", symbols.join(", "));
+    
+    // Cria URL com os símbolos das criptomoedas
+    const url = `${BASE_URL}/cryptocurrency/quotes/latest?symbol=${symbols.join(",")}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
-        "X-CMC_PRO_API_KEY": API_KEY,
-        "Accept": "application/json",
+        'X-CMC_PRO_API_KEY': API_KEY,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      toast.error(`Erro na API: ${errorData.status?.error_message || "Erro desconhecido"}`);
+      const errorText = await response.text();
+      console.error("Erro na resposta da API:", errorText);
+      toast.error(`Erro na API: ${response.status} ${response.statusText}`);
       return null;
     }
 
     const data: CoinMarketCapResponse = await response.json();
+    console.log("Dados recebidos da API:", data);
+    
+    if (data.status && data.status.error_code !== 0) {
+      toast.error(`Erro na API: ${data.status.error_message || "Erro desconhecido"}`);
+      return null;
+    }
+
     return data.data;
   } catch (error) {
     console.error("Erro ao buscar preços das criptomoedas:", error);
-    toast.error("Não foi possível atualizar os preços das criptomoedas. Tente novamente mais tarde.");
+    toast.error("Não foi possível atualizar os preços das criptomoedas: " + (error instanceof Error ? error.message : String(error)));
     return null;
   }
 };
 
-// Armazena a última vez que os preços foram atualizados
-let lastUpdateTime: number = 0;
-
+// Função para atualizar preços no estado da aplicação
 export const updateCryptoPrices = async (
   assets: any[],
   setAssets: React.Dispatch<React.SetStateAction<any[]>>
 ) => {
-  const symbols = assets.map((asset) => asset.ticker).filter((ticker) => ticker !== "NOVO");
-  
-  if (symbols.length === 0) return;
-  
-  // Atualiza o timestamp da última atualização
-  lastUpdateTime = Date.now();
-  
-  const data = await fetchCryptoPrices(symbols);
-  
-  if (!data) return;
-  
-  setAssets((prevAssets) => {
-    return prevAssets.map((asset) => {
-      const cryptoData = data[asset.ticker];
-      
-      if (cryptoData) {
-        const newPrice = cryptoData.quote.USD.price;
-        const newChange = cryptoData.quote.USD.percent_change_24h;
-        const newTotal = asset.quantity * newPrice;
-        const newTotalBRL = newTotal * 5.62; // Taxa de câmbio fixa para exemplo
+  try {
+    const symbols = assets.map((asset) => asset.ticker).filter((ticker) => ticker !== "NOVO");
+    
+    if (symbols.length === 0) {
+      toast.info("Nenhuma criptomoeda para atualizar");
+      return;
+    }
+    
+    console.log("Atualizando preços para:", symbols);
+    
+    // Atualiza o timestamp da última atualização
+    lastUpdateTime = Date.now();
+    
+    toast.loading("Buscando preços atualizados...");
+    
+    const data = await fetchCryptoPrices(symbols);
+    
+    if (!data) {
+      toast.error("Falha ao buscar preços atualizados");
+      return;
+    }
+    
+    // Registra quais símbolos foram encontrados
+    const foundSymbols = Object.keys(data);
+    console.log("Símbolos encontrados:", foundSymbols);
+    
+    // Símbolos não encontrados
+    const missingSymbols = symbols.filter(symbol => !foundSymbols.includes(symbol));
+    if (missingSymbols.length > 0) {
+      console.warn("Símbolos não encontrados:", missingSymbols);
+      toast.warning(`Alguns símbolos não encontrados: ${missingSymbols.join(", ")}`);
+    }
+    
+    setAssets((prevAssets) => {
+      return prevAssets.map((asset) => {
+        const cryptoData = data[asset.ticker];
         
-        return {
-          ...asset,
-          price: parseFloat(newPrice.toFixed(2)),
-          change: parseFloat(newChange.toFixed(2)),
-          total: parseFloat(newTotal.toFixed(2)),
-          totalBRL: parseFloat(newTotalBRL.toFixed(2)),
-        };
-      }
-      
-      return asset;
+        if (cryptoData && cryptoData.quote && cryptoData.quote.USD) {
+          const newPrice = cryptoData.quote.USD.price;
+          const newChange = cryptoData.quote.USD.percent_change_24h;
+          const newTotal = asset.quantity * newPrice;
+          const newTotalBRL = newTotal * 5.62; // Taxa de câmbio fixa para exemplo
+          
+          return {
+            ...asset,
+            price: parseFloat(newPrice.toFixed(2)),
+            change: parseFloat(newChange.toFixed(2)),
+            total: parseFloat(newTotal.toFixed(2)),
+            totalBRL: parseFloat(newTotalBRL.toFixed(2)),
+          };
+        }
+        
+        return asset;
+      });
     });
-  });
-  
-  toast.success("Preços das criptomoedas atualizados com sucesso!");
+    
+    toast.success("Preços das criptomoedas atualizados com sucesso!");
+  } catch (error) {
+    console.error("Erro durante atualização de preços:", error);
+    toast.error("Erro ao atualizar preços: " + (error instanceof Error ? error.message : String(error)));
+  }
 };
 
 // Verifica se é necessária uma atualização automática

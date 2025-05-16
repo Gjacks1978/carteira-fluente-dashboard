@@ -456,10 +456,25 @@ export default function CriptoPage() {
 
   const sortedColumns = [...columns].sort((a, b) => a.order - b.order);
 
+  // Estado para controlar o carregamento
+  const [isLoading, setIsLoading] = useState(false);
+  
   // Função para atualizar preços de criptomoedas
   const refreshCryptoPrices = async () => {
-    await updateCryptoPrices(assets, setAssets);
-    calculateAllocations();
+    try {
+      setIsLoading(true);
+      toast.info("Iniciando atualização de preços...");
+      
+      await updateCryptoPrices(assets, setAssets);
+      calculateAllocations();
+      
+      toast.success("Atualização de preços concluída com sucesso!");
+    } catch (error) {
+      console.error("Erro ao atualizar preços:", error);
+      toast.error("Falha ao atualizar preços: " + (error instanceof Error ? error.message : "Erro desconhecido"));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Atualizar preços quando a página carrega e verificar a cada hora se é necessário atualizar (a cada 12h)
@@ -489,8 +504,10 @@ export default function CriptoPage() {
             onClick={refreshCryptoPrices} 
             variant="outline" 
             className="flex items-center gap-2"
+            disabled={isLoading}
           >
-            <RefreshCw className="h-4 w-4" /> Atualizar Preços Manualmente
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? 'Atualizando...' : 'Atualizar Preços Manualmente'}
           </Button>
           <Button onClick={addNewAsset} className="flex items-center gap-2">
             <Plus className="h-4 w-4" /> Adicionar Criptomoeda
