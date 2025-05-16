@@ -10,6 +10,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from "@/components/ui/menubar";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 interface CriptoAsset {
   id: string;
   ticker: string;
@@ -25,12 +28,14 @@ interface CriptoAsset {
   lend: number;
   borrow: number;
 }
+
 interface TableColumn {
   id: string;
   title: string;
   visible: boolean;
   order: number;
 }
+
 export default function CriptoPage() {
   const [assets, setAssets] = useState<CriptoAsset[]>([{
     id: "1",
@@ -170,6 +175,8 @@ export default function CriptoPage() {
   const [newCustodian, setNewCustodian] = useState("");
   const [draggedRowId, setDraggedRowId] = useState<string | null>(null);
   const [draggedColId, setDraggedColId] = useState<string | null>(null);
+  const [openSector, setOpenSector] = useState<string | null>(null);
+  const [openCustodian, setOpenCustodian] = useState<string | null>(null);
   const totalPortfolio = assets.reduce((sum, asset) => sum + asset.total, 0);
   const totalPortfolioBRL = assets.reduce((sum, asset) => sum + asset.totalBRL, 0);
   const totalLend = assets.reduce((sum, asset) => sum + asset.lend, 0);
@@ -458,34 +465,67 @@ export default function CriptoPage() {
                             </TableCell>;
                     case 'sector':
                       return <TableCell key={column.id}>
-                              <ContextMenu>
-                                <ContextMenuTrigger>
-                                  <Select value={asset.sector} onValueChange={value => handleChangeSector(asset.id, value)}>
-                                    <SelectTrigger className="w-28 h-8">
-                                      <SelectValue placeholder="Selecionar setor" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {sectors.map(sector => <SelectItem key={sector} value={sector}>
-                                          <div className="flex justify-between items-center w-full">
-                                            <span>{sector}</span>
-                                          </div>
-                                        </SelectItem>)}
-                                      <div className="flex items-center gap-2 p-2 border-t">
-                                        <Input placeholder="Novo setor" value={newSector} onChange={e => setNewSector(e.target.value)} className="h-8" />
-                                        <Button type="button" size="sm" onClick={addNewSector}>
-                                          <Plus className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                    </SelectContent>
-                                  </Select>
-                                </ContextMenuTrigger>
-                                <ContextMenuContent>
-                                  {sectors.map(sector => <ContextMenuItem key={sector} className="flex justify-between items-center" onClick={() => deleteSector(sector)}>
-                                      <span>Excluir "{sector}"</span>
-                                      <Trash className="h-4 w-4 ml-2 text-destructive" />
-                                    </ContextMenuItem>)}
-                                </ContextMenuContent>
-                              </ContextMenu>
+                              <Popover open={openSector === asset.id} onOpenChange={open => setOpenSector(open ? asset.id : null)}>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" role="combobox" aria-expanded={openSector === asset.id} className="w-40 justify-between h-8">
+                                    {asset.sector}
+                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-52 p-0">
+                                  <Command>
+                                    <CommandInput placeholder="Buscar setor..." />
+                                    <CommandEmpty>Nenhum setor encontrado.</CommandEmpty>
+                                    <CommandGroup>
+                                      {sectors.map(sector => (
+                                        <CommandItem
+                                          key={sector}
+                                          value={sector}
+                                          onSelect={() => {
+                                            handleChangeSector(asset.id, sector);
+                                            setOpenSector(null);
+                                          }}
+                                          className="flex justify-between items-center"
+                                        >
+                                          <span>{sector}</span>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-6 w-6"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deleteSector(sector);
+                                            }}
+                                          >
+                                            <Trash className="h-3 w-3" />
+                                          </Button>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                    <div className="border-t p-2 flex gap-2">
+                                      <Input 
+                                        placeholder="Novo setor" 
+                                        value={newSector} 
+                                        onChange={e => setNewSector(e.target.value)} 
+                                        className="h-8"
+                                      />
+                                      <Button 
+                                        type="button" 
+                                        size="sm" 
+                                        onClick={() => {
+                                          addNewSector();
+                                          if (newSector && !sectors.includes(newSector)) {
+                                            handleChangeSector(asset.id, newSector);
+                                            setOpenSector(null);
+                                          }
+                                        }}
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </TableCell>;
                     case 'price':
                       return <TableCell key={column.id}>
@@ -518,23 +558,67 @@ export default function CriptoPage() {
                             </TableCell>;
                     case 'custodian':
                       return <TableCell key={column.id}>
-                              <ContextMenu>
-                                <ContextMenuTrigger>
-                                  <Input type="text" value={asset.custodian} onChange={e => handleChangeCustodian(asset.id, e.target.value)} className="max-w-28 h-8" />
-                                </ContextMenuTrigger>
-                                <ContextMenuContent>
-                                  {custodians.map(custodian => <ContextMenuItem key={custodian} className="flex justify-between items-center" onClick={() => deleteCustodian(custodian)}>
-                                      <span>Excluir "{custodian}"</span>
-                                      <Trash className="h-4 w-4 ml-2 text-destructive" />
-                                    </ContextMenuItem>)}
-                                  <div className="flex items-center gap-2 p-2 border-t">
-                                    <Input placeholder="Nova custódia" value={newCustodian} onChange={e => setNewCustodian(e.target.value)} className="h-8" />
-                                    <Button type="button" size="sm" onClick={addNewCustodian}>
-                                      <Plus className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                </ContextMenuContent>
-                              </ContextMenu>
+                              <Popover open={openCustodian === asset.id} onOpenChange={open => setOpenCustodian(open ? asset.id : null)}>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" role="combobox" aria-expanded={openCustodian === asset.id} className="w-40 justify-between h-8">
+                                    {asset.custodian}
+                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-52 p-0">
+                                  <Command>
+                                    <CommandInput placeholder="Buscar custódia..." />
+                                    <CommandEmpty>Nenhuma custódia encontrada.</CommandEmpty>
+                                    <CommandGroup>
+                                      {custodians.map(custodian => (
+                                        <CommandItem
+                                          key={custodian}
+                                          value={custodian}
+                                          onSelect={() => {
+                                            handleChangeCustodian(asset.id, custodian);
+                                            setOpenCustodian(null);
+                                          }}
+                                          className="flex justify-between items-center"
+                                        >
+                                          <span>{custodian}</span>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-6 w-6"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deleteCustodian(custodian);
+                                            }}
+                                          >
+                                            <Trash className="h-3 w-3" />
+                                          </Button>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                    <div className="border-t p-2 flex gap-2">
+                                      <Input 
+                                        placeholder="Nova custódia" 
+                                        value={newCustodian} 
+                                        onChange={e => setNewCustodian(e.target.value)} 
+                                        className="h-8"
+                                      />
+                                      <Button 
+                                        type="button" 
+                                        size="sm" 
+                                        onClick={() => {
+                                          addNewCustodian();
+                                          if (newCustodian && !custodians.includes(newCustodian)) {
+                                            handleChangeCustodian(asset.id, newCustodian);
+                                            setOpenCustodian(null);
+                                          }
+                                        }}
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </TableCell>;
                     case 'lend':
                       return <TableCell key={column.id} className="text-right">

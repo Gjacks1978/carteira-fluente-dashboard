@@ -1,8 +1,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { useState } from "react";
 
-const data = [
+// Default data using state hook for future editability
+const defaultData = [
   { name: "Crypto", value: 30, color: "#38B2AC" },
   { name: "US Stocks", value: 25, color: "#4299E1" },
   { name: "BR Stocks", value: 15, color: "#48BB78" },
@@ -11,6 +13,8 @@ const data = [
 ];
 
 export function PortfolioOverview() {
+  const [data, setData] = useState(defaultData);
+  
   return (
     <Card className="col-span-1">
       <CardHeader>
