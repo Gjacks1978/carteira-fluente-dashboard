@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,26 +16,8 @@ const PortfolioSummaryCard: React.FC<PortfolioSummaryCardProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Resumo da Carteira</CardTitle>
-        <CardDescription>
-          Valor total em USD: $
-          {totalPortfolio.toLocaleString("pt-BR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-          <span className="ml-4">
-            Valor total em BRL: R${" "}
-            {totalPortfolioBRL.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </span>
-          <div className="mt-2">
-            <Button variant="outline" size="sm" onClick={calculateAllocations}>
-              Recalcular Alocações
-            </Button>
-          </div>
-        </CardDescription>
+        <CardTitle>Resumo do Portfólio</CardTitle>
+        <CardDescription>Visão geral do seu portfólio de criptomoedas</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

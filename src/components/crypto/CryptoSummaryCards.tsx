@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -43,7 +42,7 @@ export function CryptoSummaryCards({ assets }: CryptoSummaryCardsProps) {
               <div key={sector} className="flex justify-between">
                 <span>{sector}</span>
                 <span className="font-medium">
-                  {((total / totalPortfolio) * 100).toFixed(1)}% (${total.toLocaleString()})
+                  {((total / totalPortfolio) * 100).toFixed(1)}% (R${total.toLocaleString()})
                 </span>
               </div>
             ))}
@@ -56,9 +55,9 @@ export function CryptoSummaryCards({ assets }: CryptoSummaryCardsProps) {
           <CardTitle className="text-sm font-medium">Disponível em Caixa</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${stablecoinsTotal.toLocaleString()}</div>
+          <div className="text-2xl font-bold">R${stablecoinsTotal.toLocaleString()}</div>
           <p className="text-xs text-muted-foreground">
-            {((stablecoinsTotal / totalPortfolio) * 100).toFixed(1)}% do portfolio
+            {((stablecoinsTotal / totalPortfolio) * 100).toFixed(1)}% do portfólio
           </p>
         </CardContent>
       </Card>
@@ -79,10 +78,10 @@ export function CryptoSummaryCards({ assets }: CryptoSummaryCardsProps) {
               />
             </div>
             <div className="text-2xl font-bold" style={{ color: profitLoss >= 0 ? '#22c55e' : '#ef4444' }}>
-              ${profitLoss.toLocaleString()}
+              R${profitLoss.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              {profitLossPercentage.toFixed(1)}% sobre o investimento
+              {profitLossPercentage.toFixed(1)}% do investimento
             </p>
           </div>
         </CardContent>

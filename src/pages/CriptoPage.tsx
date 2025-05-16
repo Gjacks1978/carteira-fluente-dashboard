@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -182,7 +181,7 @@ export default function CriptoPage() {
   const [draggedColId, setDraggedColId] = useState<string | null>(null);
   const [openSector, setOpenSector] = useState<string | null>(null);
   const [openCustodian, setOpenCustodian] = useState<string | null>(null);
-  
+
   const totalPortfolio = assets.reduce((sum, asset) => sum + asset.total, 0);
   const totalPortfolioBRL = assets.reduce((sum, asset) => sum + asset.totalBRL, 0);
   const totalLend = assets.reduce((sum, asset) => sum + asset.lend, 0);
@@ -458,6 +457,7 @@ export default function CriptoPage() {
 
   return (
     <div className="space-y-6">
+      
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Carteira de Criptomoedas</h1>
         <Button onClick={addNewAsset} className="flex items-center gap-2">

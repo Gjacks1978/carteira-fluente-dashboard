@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -49,7 +48,7 @@ export function Navigation() {
         <div className="space-y-1">
           <NavItem 
             to="/"
-            label="Dashboard"
+            label="Painel"
             icon={<LayoutDashboard className="h-5 w-5" />}
           />
           <NavItem 
