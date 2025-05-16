@@ -561,7 +561,7 @@ export default function CriptoPage() {
                 <TableRow>
                   <TableCell colSpan={4} className="font-medium bg-emerald-50 bg-[finance-gray-light]">TOTAL</TableCell>
                   <TableCell></TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="text-center font-medium">
                     ${totalPortfolio.toLocaleString('pt-BR', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
@@ -575,13 +575,13 @@ export default function CriptoPage() {
                   </TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="text-center font-medium">
                     {totalLend.toLocaleString('pt-BR', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
                   </TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="text-center font-medium">
                     {totalBorrow.toLocaleString('pt-BR', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
