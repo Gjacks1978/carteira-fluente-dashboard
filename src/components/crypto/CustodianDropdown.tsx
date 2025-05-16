@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export function CustodianDropdown() {
+const CustodianDropdown = () => {
   const [value, setValue] = React.useState("")
 
   const custodians = [
@@ -37,4 +37,4 @@ export function CustodianDropdown() {
   )
 }
 
-export default CustodianDropdown;
+export default CustodianDropdown

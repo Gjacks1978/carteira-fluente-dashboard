@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import {
   Select,
@@ -7,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export function SectorDropdown() {
+const SectorDropdown = () => {
   const [value, setValue] = React.useState("")
 
   const sectors = [
@@ -38,3 +39,5 @@ export function SectorDropdown() {
     </Select>
   )
 }
+
+export default SectorDropdown
