@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { CriptoAsset, TableColumn } from "@/components/crypto/types";
+import { CryptoSummaryCards } from "@/components/crypto/CryptoSummaryCards";
 import AssetTable from "@/components/crypto/AssetTable";
 import PortfolioSummaryCard from "@/components/crypto/PortfolioSummaryCard";
 
@@ -463,6 +464,8 @@ export default function CriptoPage() {
           <Plus className="h-4 w-4" /> Adicionar Criptomoeda
         </Button>
       </div>
+
+      <CryptoSummaryCards assets={assets} />
 
       <PortfolioSummaryCard
         totalPortfolio={totalPortfolio}
