@@ -181,6 +181,7 @@ export default function CriptoPage() {
   const totalPortfolioBRL = assets.reduce((sum, asset) => sum + asset.totalBRL, 0);
   const totalLend = assets.reduce((sum, asset) => sum + asset.lend, 0);
   const totalBorrow = assets.reduce((sum, asset) => sum + asset.borrow, 0);
+  
   const handleChangeQuantity = (id: string, newQuantity: number) => {
     setAssets(assets.map(asset => {
       if (asset.id === id) {
@@ -196,6 +197,7 @@ export default function CriptoPage() {
       return asset;
     }));
   };
+  
   const handleChangeTotal = (id: string, newTotal: number) => {
     setAssets(assets.map(asset => {
       if (asset.id === id) {
@@ -211,6 +213,7 @@ export default function CriptoPage() {
       return asset;
     }));
   };
+  
   const handleChangeTicker = (id: string, newTicker: string) => {
     setAssets(assets.map(asset => {
       if (asset.id === id) {
@@ -222,6 +225,7 @@ export default function CriptoPage() {
       return asset;
     }));
   };
+  
   const handleChangeNetwork = (id: string, newNetwork: string) => {
     setAssets(assets.map(asset => {
       if (asset.id === id) {
@@ -233,6 +237,7 @@ export default function CriptoPage() {
       return asset;
     }));
   };
+  
   const handleChangeCustodian = (id: string, newCustodian: string) => {
     setAssets(assets.map(asset => {
       if (asset.id === id) {
@@ -244,6 +249,7 @@ export default function CriptoPage() {
       return asset;
     }));
   };
+  
   const handleChangeSector = (id: string, newSector: string) => {
     setAssets(assets.map(asset => {
       if (asset.id === id) {
@@ -255,6 +261,7 @@ export default function CriptoPage() {
       return asset;
     }));
   };
+  
   const handleChangeLend = (id: string, newLend: number) => {
     setAssets(assets.map(asset => {
       if (asset.id === id) {
@@ -266,6 +273,7 @@ export default function CriptoPage() {
       return asset;
     }));
   };
+  
   const handleChangeBorrow = (id: string, newBorrow: number) => {
     setAssets(assets.map(asset => {
       if (asset.id === id) {
@@ -277,6 +285,7 @@ export default function CriptoPage() {
       return asset;
     }));
   };
+  
   const addNewSector = () => {
     if (newSector && !sectors.includes(newSector)) {
       setSectors([...sectors, newSector]);
@@ -286,6 +295,7 @@ export default function CriptoPage() {
       toast.error("Este setor já existe!");
     }
   };
+  
   const addNewCustodian = () => {
     if (newCustodian && !custodians.includes(newCustodian)) {
       setCustodians([...custodians, newCustodian]);
@@ -295,6 +305,7 @@ export default function CriptoPage() {
       toast.error("Esta custódia já existe!");
     }
   };
+  
   const addNewAsset = () => {
     const newId = (Math.max(...assets.map(asset => parseInt(asset.id))) + 1).toString();
     const newAsset: CriptoAsset = {
@@ -315,10 +326,12 @@ export default function CriptoPage() {
     setAssets([...assets, newAsset]);
     toast.success("Nova criptomoeda adicionada com sucesso!");
   };
+  
   const deleteAsset = (id: string) => {
     setAssets(assets.filter(asset => asset.id !== id));
     toast.success("Criptomoeda removida com sucesso!");
   };
+  
   const deleteSector = (sectorToDelete: string) => {
     if (assets.some(asset => asset.sector === sectorToDelete)) {
       toast.error("Este setor está em uso e não pode ser excluído!");
@@ -327,6 +340,7 @@ export default function CriptoPage() {
     setSectors(sectors.filter(sector => sector !== sectorToDelete));
     toast.success("Setor removido com sucesso!");
   };
+  
   const deleteCustodian = (custodianToDelete: string) => {
     if (assets.some(asset => asset.custodian === custodianToDelete)) {
       toast.error("Esta custódia está em uso e não pode ser excluída!");
@@ -350,6 +364,7 @@ export default function CriptoPage() {
   const handleDragStart = (id: string) => {
     setDraggedRowId(id);
   };
+  
   const handleDragOver = (e: React.DragEvent, id: string) => {
     e.preventDefault();
     if (draggedRowId && draggedRowId !== id) {
@@ -367,6 +382,7 @@ export default function CriptoPage() {
       }
     }
   };
+  
   const handleDragEnd = () => {
     setDraggedRowId(null);
     calculateAllocations();
@@ -377,9 +393,11 @@ export default function CriptoPage() {
     setDraggedColId(id);
     e.dataTransfer.effectAllowed = 'move';
   };
+  
   const handleColumnDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
+  
   const handleColumnDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     if (draggedColId && draggedColId !== targetId) {
@@ -406,7 +424,9 @@ export default function CriptoPage() {
     }
     setDraggedColId(null);
   };
+  
   const sortedColumns = [...columns].sort((a, b) => a.order - b.order);
+  
   return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Carteira de Criptomoedas</h1>
@@ -477,7 +497,7 @@ export default function CriptoPage() {
                                     <CommandInput placeholder="Buscar setor..." />
                                     <CommandEmpty>Nenhum setor encontrado.</CommandEmpty>
                                     <CommandGroup>
-                                      {sectors.map(sector => (
+                                      {(sectors || []).map(sector => (
                                         <CommandItem
                                           key={sector}
                                           value={sector}
@@ -570,7 +590,7 @@ export default function CriptoPage() {
                                     <CommandInput placeholder="Buscar custódia..." />
                                     <CommandEmpty>Nenhuma custódia encontrada.</CommandEmpty>
                                     <CommandGroup>
-                                      {custodians.map(custodian => (
+                                      {(custodians || []).map(custodian => (
                                         <CommandItem
                                           key={custodian}
                                           value={custodian}
