@@ -1,3 +1,4 @@
+
 import { toast } from '@/components/ui/sonner';
 
 const API_KEY = 'e341ff27-5e33-4c6d-a3f1-08646d086fec';
@@ -63,11 +64,57 @@ export const fetchCryptoPrices = async (symbols: string[]) => {
   }
 };
 
+// Função para atualizar os preços dos ativos
+export const updateCryptoPrices = async (assets, setAssets) => {
+  try {
+    // Extrair apenas os tickers BTC, ETH, SOL - aqueles com preços reais
+    const symbols = assets
+      .filter(asset => ["BTC", "ETH", "SOL"].includes(asset.ticker))
+      .map(asset => asset.ticker);
+    
+    if (symbols.length === 0) {
+      console.log("Nenhum símbolo de criptomoeda válido para atualizar");
+      return;
+    }
+    
+    const prices = await fetchCryptoPrices(symbols);
+    
+    // Atualizar os ativos com os novos preços
+    if (Object.keys(prices).length > 0) {
+      setAssets(prev => 
+        prev.map(asset => {
+          if (prices[asset.ticker]) {
+            const newPrice = prices[asset.ticker];
+            const newTotal = asset.quantity * newPrice;
+            const newTotalBRL = newTotal * 5.62; // Taxa de câmbio fixa para exemplo
+            
+            return {
+              ...asset,
+              price: newPrice,
+              total: parseFloat(newTotal.toFixed(2)),
+              totalBRL: parseFloat(newTotalBRL.toFixed(2)),
+            };
+          }
+          return asset;
+        })
+      );
+      
+      console.log("Ativos atualizados com sucesso!");
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error("Erro ao atualizar preços dos ativos:", error);
+    return false;
+  }
+};
+
 // Verifica se é necessária uma atualização automática
 export const shouldAutoUpdate = (): boolean => {
   const now = Date.now();
   const twelveHoursInMs = 12 * 60 * 60 * 1000; // 12 horas em milissegundos
-
+  
   // Retorna true se passaram 12 horas desde a última atualização
   return (now - getLastUpdateTime()) > twelveHoursInMs;
 };
