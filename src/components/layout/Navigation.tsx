@@ -10,7 +10,10 @@ import {
   ArrowLeftRight,
   Settings,
   Bitcoin,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useNavigate } from "react-router-dom";
 
 interface NavItemProps {
   to: string;
@@ -36,7 +39,11 @@ function NavItem({ to, label, icon }: NavItemProps) {
   );
 }
 
-export function Navigation() {
+export default function Navigation() {
+  const location = useLocation();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <div className="flex w-64 flex-col border-r bg-background">
       <div className="flex h-16 items-center border-b px-6">
@@ -82,6 +89,17 @@ export function Navigation() {
             icon={<Settings className="h-5 w-5" />}
           />
         </div>
+
+        <button
+          onClick={() => {
+            logout();
+            navigate("/login");
+          }}
+          className="flex items-center py-2 px-4 text-muted-foreground hover:text-primary hover:bg-accent rounded-md w-full"
+        >
+          <LogOut className="w-5 h-5 mr-3" />
+          Sair
+        </button>
       </nav>
     </div>
   );
