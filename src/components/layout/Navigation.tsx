@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -39,7 +40,7 @@ function NavItem({ to, label, icon }: NavItemProps) {
   );
 }
 
-function Navigation() {
+export default function Navigation() {
   const location = useLocation();
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -102,8 +103,5 @@ function Navigation() {
         </button>
       </nav>
     </div>
-}
-
-export default Navigation;
   );
 }
