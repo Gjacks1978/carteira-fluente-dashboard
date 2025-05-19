@@ -39,7 +39,7 @@ function NavItem({ to, label, icon }: NavItemProps) {
   );
 }
 
-export default function Navigation() {
+function Navigation() {
   const location = useLocation();
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -102,5 +102,8 @@ export default function Navigation() {
         </button>
       </nav>
     </div>
+}
+
+export default Navigation;
   );
 }
