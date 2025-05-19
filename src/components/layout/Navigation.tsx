@@ -12,7 +12,7 @@ import {
   Bitcoin,
   LogOut,
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 interface NavItemProps {
