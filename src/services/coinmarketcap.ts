@@ -14,19 +14,21 @@ export const fetchCryptoPrices = async (symbols: string[]) => {
   try {
     if (!symbols || symbols.length === 0) {
       console.log("Nenhum símbolo de criptomoeda fornecido para atualização");
-      return {};
+      return {
+        prices: {},
+        changes: {}
+      };
     }
 
     console.log("Iniciando busca por preços para:", symbols.join(", "));
 
-    // Cria URL com os símbolos das criptomoedas usando o proxy configurado no vite.config.ts
-    const url = `/api/coinmarketcap/cryptocurrency/quotes/latest?symbol=${symbols.join(",")}`;
+    // Cria URL com os símbolos das criptomoedas
+    const url = `/api/coinmarketcap/v2/cryptocurrency/quotes/latest?symbol=${symbols.join(",")}`;
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
       },
     });
 
@@ -36,36 +38,39 @@ export const fetchCryptoPrices = async (symbols: string[]) => {
     }
 
     const data = await response.json();
+    console.log("Resposta da API:", data); // Debug
 
     if (data.status?.error_code && data.status.error_code !== 0) {
       throw new Error(`Erro da API: ${data.status.error_message}`);
     }
 
-    // Extrair preços
+    // Extrair preços e variações
     const prices: { [key: string]: number } = {};
     const changes: { [key: string]: number } = {};
 
     for (const symbol of symbols) {
-      if (data.data && data.data[symbol]) {
+      if (data.data && data.data[symbol] && data.data[symbol].quote && data.data[symbol].quote.USD) {
         const quote = data.data[symbol].quote.USD;
-        prices[symbol] = quote.price;
-        changes[symbol] = quote.percent_change_24h;
+        prices[symbol] = Number(quote.price);
+        changes[symbol] = Number(quote.percent_change_24h);
+        
+        console.log(`Preço atualizado para ${symbol}:`, prices[symbol]); // Debug
+        console.log(`Variação 24h para ${symbol}:`, changes[symbol]); // Debug
+      } else {
+        console.warn(`Dados ausentes ou inválidos para ${symbol}`);
       }
     }
 
     // Atualizar timestamp da última atualização
     lastUpdateTime = Date.now();
 
-    console.log("Preços atualizados com sucesso:", prices);
-    console.log("Variações 24h atualizadas com sucesso:", changes);
-    
     return {
       prices,
       changes
     };
   } catch (error) {
+    console.error("Erro ao buscar preços de criptomoedas:", error);
     toast.error("Erro ao atualizar preços das criptomoedas");
-    console.error("Erro ao buscar preços de criptomoedas:", error instanceof Error ? error.message : String(error));
     return {
       prices: {},
       changes: {}
@@ -83,12 +88,13 @@ export const updateCryptoPrices = async (assets, setAssets) => {
     
     if (symbols.length === 0) {
       console.log("Nenhum símbolo de criptomoeda válido para atualizar");
-      return;
+      return false;
     }
     
     const { prices, changes } = await fetchCryptoPrices(symbols);
+    console.log("Preços recebidos:", prices); // Debug
+    console.log("Variações recebidas:", changes); // Debug
     
-    // Atualizar os ativos com os novos preços e variações
     if (Object.keys(prices).length > 0) {
       setAssets(prev => 
         prev.map(asset => {
@@ -97,6 +103,13 @@ export const updateCryptoPrices = async (assets, setAssets) => {
             const newChange = changes[asset.ticker];
             const newTotal = asset.quantity * newPrice;
             const newTotalBRL = newTotal * 5.62; // Taxa de câmbio fixa para exemplo
+            
+            console.log(`Atualizando ${asset.ticker}:`, {
+              preço: newPrice,
+              variação: newChange,
+              total: newTotal,
+              totalBRL: newTotalBRL
+            }); // Debug
             
             return {
               ...asset,
@@ -110,13 +123,14 @@ export const updateCryptoPrices = async (assets, setAssets) => {
         })
       );
       
-      console.log("Ativos atualizados com sucesso!");
+      toast.success("Preços atualizados com sucesso!");
       return true;
     }
     
     return false;
   } catch (error) {
     console.error("Erro ao atualizar preços dos ativos:", error);
+    toast.error("Falha ao atualizar preços");
     return false;
   }
 };
@@ -125,21 +139,18 @@ export const updateCryptoPrices = async (assets, setAssets) => {
 export const shouldAutoUpdate = (): boolean => {
   const now = Date.now();
   const twelveHoursInMs = 12 * 60 * 60 * 1000; // 12 horas em milissegundos
-  
-  // Retorna true se passaram 12 horas desde a última atualização
   return (now - getLastUpdateTime()) > twelveHoursInMs;
 };
 
 // Função para buscar detalhes de uma criptomoeda específica
 export const fetchCryptoDetails = async (symbol: string) => {
   try {
-    const url = `/api/coinmarketcap/cryptocurrency/info?symbol=${symbol}`;
+    const url = `/api/coinmarketcap/v2/cryptocurrency/info?symbol=${symbol}`;
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
       },
     });
 
@@ -156,7 +167,7 @@ export const fetchCryptoDetails = async (symbol: string) => {
     return data.data[symbol];
   } catch (error) {
     toast.error("Erro ao buscar detalhes da criptomoeda");
-    console.error("Erro:", error instanceof Error ? error.message : String(error));
+    console.error("Erro:", error);
     return null;
   }
 };
@@ -164,13 +175,12 @@ export const fetchCryptoDetails = async (symbol: string) => {
 // Função para buscar lista de criptomoedas
 export const fetchCryptoList = async (limit: number = 100) => {
   try {
-    const url = `/api/coinmarketcap/cryptocurrency/listings/latest?limit=${limit}`;
+    const url = `/api/coinmarketcap/v2/cryptocurrency/listings/latest?limit=${limit}`;
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
       },
     });
 
@@ -195,7 +205,7 @@ export const fetchCryptoList = async (limit: number = 100) => {
     }));
   } catch (error) {
     toast.error("Erro ao buscar lista de criptomoedas");
-    console.error("Erro:", error instanceof Error ? error.message : String(error));
+    console.error("Erro:", error);
     return [];
   }
 };
