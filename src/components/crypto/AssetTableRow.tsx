@@ -39,9 +39,9 @@ interface AssetTableRowProps {
   handleChangeTotal: (id: string, newTotal: number) => void;
   handleChangeLend: (id: string, newLend: number) => void;
   handleChangeBorrow: (id: string, newBorrow: number) => void;
-  addNewSector: (newSector: string) => void;
+  addNewSector: (newSector: string) => boolean;
   deleteSector: (sector: string) => void;
-  addNewCustodian: (newCustodian: string) => void;
+  addNewCustodian: (newCustodian: string) => boolean;
   deleteCustodian: (custodian: string) => void;
   deleteAsset: (id: string) => void;
   handleDragStart: (id: string) => void;
