@@ -1,7 +1,19 @@
 
 import { toast } from "sonner";
 
-const BASE_URL = 'https://api.coingecko.com/api/v3';
+// =================================================================================
+//  INSTRUÇÃO IMPORTANTE: Para a busca de preços funcionar, você precisa de uma
+//  chave de API do CoinGecko. A API pública gratuita tem restrições de CORS
+//  que impedem chamadas do navegador.
+//
+//  1. Vá para https://www.coingecko.com/en/api/pricing
+//  2. Escolha o plano "Demo" (gratuito) e obtenha sua chave de API.
+//  3. Cole sua chave de API na constante API_KEY abaixo.
+// =================================================================================
+const API_KEY = ""; // <-- COLOQUE SUA CHAVE DE API DO COINGECKO AQUI
+
+// Usar a API Pro (mesmo no plano gratuito) evita problemas de CORS no navegador.
+const BASE_URL = 'https://pro-api.coingecko.com/api/v3';
 
 // Mapeamento de tickers para IDs do CoinGecko
 const TICKER_TO_ID_MAP: { [key: string]: string } = {
@@ -48,13 +60,21 @@ export const fetchCryptoPrices = async (tickers: string[]) => {
         changes: {}
       };
     }
+    
+    if (!API_KEY) {
+      toast.warning("Chave de API do CoinGecko não configurada.", {
+        description: "Adicione sua chave de API em src/services/coingecko.ts para buscar os preços.",
+      });
+      console.warn("Chave de API do CoinGecko não configurada. A busca de preços será ignorada.");
+      return { prices: {}, changes: {} };
+    }
 
     console.log("Iniciando busca por preços para:", tickers.join(", "));
 
     // Converter tickers para IDs do CoinGecko
     const coingeckoIds = tickers.map(ticker => getCoingeckoId(ticker)).join(',');
     
-    const url = `${BASE_URL}/simple/price?ids=${coingeckoIds}&vs_currencies=usd&include_24hr_change=true`;
+    const url = `${BASE_URL}/simple/price?ids=${coingeckoIds}&vs_currencies=usd&include_24hr_change=true&x_cg_pro_api_key=${API_KEY}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -64,6 +84,13 @@ export const fetchCryptoPrices = async (tickers: string[]) => {
     });
 
     if (!response.ok) {
+       if (response.status === 401) {
+        toast.error("Erro de autenticação com a API CoinGecko.", {
+          description: "Verifique se sua chave de API está correta em src/services/coingecko.ts.",
+        });
+      } else {
+        toast.error(`Erro na API CoinGecko: ${response.status}`);
+      }
       throw new Error(`Erro na API CoinGecko: ${response.status}`);
     }
 
