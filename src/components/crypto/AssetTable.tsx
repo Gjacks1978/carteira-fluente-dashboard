@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Table,
@@ -137,40 +138,68 @@ const AssetTable: React.FC<AssetTableProps> = ({
       </TableBody>
       <TableFooter>
         <TableRow>
-          <TableCell colSpan={4} className="font-medium bg-emerald-50 bg-[finance-gray-light]">
-            TOTAL
-          </TableCell>
-          <TableCell></TableCell>
-          <TableCell className="text-center font-medium">
-            $
-            {totalPortfolio.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </TableCell>
-          <TableCell className="text-right font-medium">
-            R${" "}
-            {totalPortfolioBRL.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </TableCell>
-          <TableCell></TableCell>
-          <TableCell></TableCell>
-          <TableCell className="text-center font-medium">
-            {totalLend.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </TableCell>
-          <TableCell className="text-center font-medium">
-            {totalBorrow.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </TableCell>
-          <TableCell className="text-right font-medium">100%</TableCell>
-          <TableCell></TableCell>
+          {sortedColumns.map((column) => {
+            if (!column.visible) return null;
+
+            switch (column.id) {
+              case "ticker":
+                return (
+                  <TableCell
+                    key={column.id}
+                    className="font-medium bg-emerald-50 bg-[finance-gray-light]"
+                  >
+                    TOTAL
+                  </TableCell>
+                );
+              case "total":
+                return (
+                  <TableCell key={column.id} className="text-center font-medium">
+                    $
+                    {totalPortfolio.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </TableCell>
+                );
+              case "totalBRL":
+                return (
+                  <TableCell key={column.id} className="text-right font-medium">
+                    R${" "}
+                    {totalPortfolioBRL.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </TableCell>
+                );
+              case "lend":
+                return (
+                  <TableCell key={column.id} className="text-center font-medium">
+                    {totalLend.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </TableCell>
+                );
+              case "borrow":
+                return (
+                  <TableCell key={column.id} className="text-center font-medium">
+                    {totalBorrow.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </TableCell>
+                );
+              case "allocation":
+                return (
+                  <TableCell key={column.id} className="text-right font-medium">
+                    100%
+                  </TableCell>
+                );
+              default:
+                return <TableCell key={column.id}></TableCell>;
+            }
+          })}
+          <TableCell></TableCell>{/* Ações */}
         </TableRow>
       </TableFooter>
     </Table>
