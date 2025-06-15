@@ -6,7 +6,7 @@ import { CriptoAsset, TableColumn } from "@/components/crypto/types";
 import { CryptoSummaryCards } from "@/components/crypto/CryptoSummaryCards";
 import AssetTable from "@/components/crypto/AssetTable";
 import PortfolioSummaryCard from "@/components/crypto/PortfolioSummaryCard";
-import { updateCryptoPrices } from "@/services/coinmarketcap";
+import { updateCryptoPrices } from "@/services/coingecko";
 
 export default function CriptoPage() {
   const [assets, setAssets] = useState<CriptoAsset[]>([
@@ -459,11 +459,11 @@ export default function CriptoPage() {
   // Estado para controlar o carregamento
   const [isLoading, setIsLoading] = useState(false);
   
-  // Função para atualizar preços de criptomoedas
+  // Função para atualizar preços de criptomoedas usando CoinGecko
   const refreshCryptoPrices = async () => {
     try {
       setIsLoading(true);
-      toast.info("Iniciando atualização de preços...");
+      toast.info("Iniciando atualização de preços via CoinGecko...");
       
       await updateCryptoPrices(assets, setAssets);
       calculateAllocations();
@@ -477,23 +477,9 @@ export default function CriptoPage() {
     }
   };
 
-  // Atualizar preços quando a página carrega e verificar a cada hora se é necessário atualizar (a cada 12h)
+  // Atualizar preços quando a página carrega
   useEffect(() => {
-    // Atualizar preços ao carregar a página
     refreshCryptoPrices();
-    
-    // Verificar a cada hora se precisa atualizar (12 horas desde a última atualização)
-    const interval = setInterval(() => {
-      // Importar diretamente a função shouldAutoUpdate
-      import("@/services/coinmarketcap").then(({ shouldAutoUpdate }) => {
-        if (shouldAutoUpdate()) {
-          refreshCryptoPrices();
-          toast.info("Atualização automática de preços realizada (12h)");
-        }
-      });
-    }, 60 * 60 * 1000); // Verifica a cada hora se é necessário atualizar
-    
-    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -509,7 +495,7 @@ export default function CriptoPage() {
             disabled={isLoading}
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Atualizando...' : 'Atualizar Preços Manualmente'}
+            {isLoading ? 'Atualizando...' : 'Atualizar Preços'}
           </Button>
           <Button onClick={addNewAsset} className="flex items-center gap-2">
             <Plus className="h-4 w-4" /> Adicionar Criptomoeda
